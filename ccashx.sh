@@ -3,8 +3,13 @@
 # Copyright (C) 2022 ArcNyxx
 # see LICENCE file for licensing information
 
-error() { echo "$1" >&2; exit 1 }
-upper() { echo "$1" | tr '[:lower:]' '[:upper:]' }
+error() {
+	echo "$1" >&2; exit 1
+}
+
+upper() {
+	echo "$1" | tr '[:lower:]' '[:upper:]'
+}
 
 name() {
 	[ "${#1}" -lt 3 -o "${#1}" -gt 16 ] && error \
@@ -26,27 +31,26 @@ auth() {
 
 [ $# -lt 3 ] && error 'usage: ccashx [command] [args...]'
 
-CMD="$(grep "^$1  " cmd.conf | tr -s ' ' 2>/dev/null)"
-[ "$(echo "$CMD" | wc -l)" -ne 1 ] && error "ccashx: invalid command: $1"
+CMD="$(grep "^$1  " cmd.conf | tr -s ' ')"
+[ -z "$CMD" ] && error "ccashx: invalid command: $1"
 
 shift # command was first
 while [ -n "$2" ]; do
 	GREP="$(grep "  $1  " arg.conf)"
 	[ -z "$GREP" ] && error "ccashx: invalid argument: $1"
 
-	eval "${GREP##* } \"\$2\""
-	eval "$(upper ${GREP%%\ *})=\"\$2\""
+	eval "${GREP##* } \"\$2\"" # verify restrictions met
+	eval "$(upper ${GREP%%\ *})=\"\$2\"" # assign variable
 	shift 2
 done
 
 [ -z "$SERVER" ] && error 'ccashx: missing required argument: --server'
-[ "${SERVER%?}/" = "$SERVER" ] && SERVER="${SERVER%?}"
-
-BODY=''; ENDP="$SERVER$(echo "$CMD" | cut '-d ' -f2)"
+BODY=''; ENDP="$(echo "$SERVER$(echo "$CMD" | cut '-d ' -f2)" | tr -s '/')"
 for ARG in $(echo "${CMD##* }" | tr , ' '); do
 	[ -z "$(echo "$ARG" | tr -d '[:upper:]')" ] && break # no arguments
 
-	eval "[ -z \"\$$(upper "$ARG")\" ]" && [ "$ARG" != 'time' ] && error \
+	[ "$ARG" = 'time' -a -z "$TIME" ] && continue # time blank acceptable
+	eval "[ -z \"\$$(upper "$ARG")\" ]" && error \
 		"ccashx: missing required argument: $(grep "$ARG" arg.conf |
 		cut '-d ' -f3)"
 
@@ -54,10 +58,10 @@ for ARG in $(echo "${CMD##* }" | tr , ' '); do
 		ENDP="$ENDP$NAME"
 	elif [ "$ARG" != 'auth' ]; then
 		eval "TMP=\"\$$(upper "$ARG")\""
-		BODY="\"$BODY\":\"$TMP\","
+		BODY="$BODY\"$ARG\":\"$TMP\","
 	fi
 done
 
-[ -n "$BODY" ] && BODY="{${BODY%?}}"
-RESP=$(curl -s -k ${AUTH:+-u "$AUTH"} ${BODY:+--json "$BODY"}
-	-X "$(echo "$CMD" | cut '-d ' -f3)" "$ENDP")
+RESP="$(curl -s -v -k ${AUTH:+-u "$AUTH"} ${BODY:+--json "{${BODY%?}}"} \
+	-X "$(echo "$CMD" | cut '-d ' -f3)" "$ENDP")"
+echo "$RESP"
