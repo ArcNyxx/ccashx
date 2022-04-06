@@ -62,6 +62,5 @@ for ARG in $(echo "${CMD##* }" | tr , ' '); do
 	fi
 done
 
-RESP="$(curl -s -v -k ${AUTH:+-u "$AUTH"} ${BODY:+--json "{${BODY%?}}"} \
-	-X "$(echo "$CMD" | cut '-d ' -f3)" "$ENDP")"
-echo "$RESP"
+curl -s -v -k ${AUTH:+-u "$AUTH"} ${BODY:+--json "{${BODY%?}}"} \
+	-X "$(echo "$CMD" | cut '-d ' -f3)" "$ENDP"
