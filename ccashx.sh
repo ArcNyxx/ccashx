@@ -29,14 +29,14 @@ auth() {
 	name "${1%:*}"
 }
 
+CONF="SCRPREFIX"
 [ $# -lt 3 ] && error 'usage: ccashx [command] [args...]'
-
-CMD="$(grep "^$1  " cmd.conf | tr -s ' ')"
+CMD="$(grep "^$1  " "$CONF/cmd.conf" | tr -s ' ')"
 [ -z "$CMD" ] && error "ccashx: invalid command: $1"
 
 shift # command was first
 while [ -n "$2" ]; do
-	GREP="$(grep "  $1  " arg.conf)"
+	GREP="$(grep "  $1  " "$CONF/arg.conf")"
 	[ -z "$GREP" ] && error "ccashx: invalid argument: $1"
 
 	eval "${GREP##* } \"\$2\"" # verify restrictions met
@@ -47,20 +47,20 @@ done
 [ -z "$SERVER" ] && error 'ccashx: missing required argument: --server'
 BODY=''; ENDP="$(echo "$SERVER$(echo "$CMD" | cut '-d ' -f2)" | tr -s '/')"
 for ARG in $(echo "${CMD##* }" | tr , ' '); do
-	[ -z "$(echo "$ARG" | tr -d '[:upper:]')" ] && break # no arguments
-
-	[ "$ARG" = 'time' -a -z "$TIME" ] && continue # time blank acceptable
 	eval "[ -z \"\$$(upper "$ARG")\" ]" && error \
-		"ccashx: missing required argument: $(grep "$ARG" arg.conf |
-		cut '-d ' -f3)"
+		"ccashx: missing required argument: $(grep "$ARG" \
+			"$CONF/arg.conf" | cut '-d ' -f3)"
 
 	if [ "$ARG" = 'name' -a "${ENDP%?}=" = "$ENDP" ]; then
 		ENDP="$ENDP$NAME"
+	elif [ "$ARG" = 'time' -a -z "$TIME" ]; then
+		continue # time blank acceptable
 	elif [ "$ARG" != 'auth' ]; then
 		eval "TMP=\"\$$(upper "$ARG")\""
 		BODY="$BODY\"$ARG\":\"$TMP\","
 	fi
 done
 
-curl -s -v -k ${AUTH:+-u "$AUTH"} ${BODY:+--json "{${BODY%?}}"} \
+curl -s -i -k ${AUTH:+-u "$AUTH"} ${BODY:+--json "{${BODY%?}}"} \
 	-X "$(echo "$CMD" | cut '-d ' -f3)" "$ENDP"
+[ $? -ne 0 ] && error 'ccashx: unable to make request' $?

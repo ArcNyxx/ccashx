@@ -1,0 +1,14 @@
+ccashx - ccash command client
+=============================
+ccashx is a command line client for remote ccash servers.
+
+Installation
+------------
+ccashx comes with a Makefile and config.mk file for configurable building and
+testing.  Edit the latter to match your local setup (ccashx is installed into
+the /usr/local namespace by default, you may need to modify your $PATH).
+
+ccashx can be installed with the following command (run as root):
+
+    make install
+

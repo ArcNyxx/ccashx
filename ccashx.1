@@ -1,0 +1,50 @@
+.\" ccashx - ccash command client
+.\" Copyright (C) 2022 ArcNyxx
+.\" see LICENCE file for licensing information
+.TH CCASHX 1 ccashx\-VERSION
+.SH NAME
+ccashx \- ccash command client
+.SH SYNOPSIS
+.SY ccashx
+.I command
+.OP "\-n \-\-name" name
+.OP "\-p \-\-pass" pass
+.OP "\-c \-\-amount" amount
+.OP "\-a \-\-auth" auth
+.OP "\-t \-\-time" time
+.OP "\-s \-\-server" server
+.YS
+.SH DESCRIPTION
+.BR ccashx (1)
+is a command line client for remote ccash servers.
+.BR ccashx (1)
+verifies command line arguments and sends the server specified a request,
+writing all data returned by the server to standard output.
+.SH OPTIONS
+.TP
+.B \-n \-\-name
+Provides a name which must be between (inclusive) 3 and 16 characters long and
+must be composed of letters, numbers, and underscores.
+.TP
+.B \-p \-\-pass
+Provides a password.
+.TP
+.B \-c \-\-amount
+Provides an amount which must be a number.
+.TP
+.B \-a \-\-auth
+Provides authorisation which must be composed of a name (following the
+restrictions specified by
+.BR \-\-name )
+and a password separated by a colon.
+.TP
+.B \-\-time
+Provides a time which must be a number based on the Unix Epoch.  This option is
+always optional.
+.TP
+.B \-s \-\-server
+Provides a remote server address.  This option is not checked for validity
+before being passed to
+.BR curl (1).
+.SH AUTHOR
+Written by ArcNyxx.
