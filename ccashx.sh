@@ -29,14 +29,13 @@ auth() {
 	name "${1%:*}"
 }
 
-CONF="SCRPREFIX"
 [ $# -lt 3 ] && error 'usage: ccashx [command] [args...]'
-CMD="$(grep "^$1  " "$CONF/cmd.conf" | tr -s ' ')"
+CMD="$(grep "^$1  " "SCRPREFIX/cmd.conf" | tr -s ' ')"
 [ -z "$CMD" ] && error "ccashx: invalid command: $1"
 
 shift # command was first
 while [ -n "$2" ]; do
-	GREP="$(grep "  $1  " "$CONF/arg.conf")"
+	GREP="$(grep "  $1  " "SCRPREFIX/arg.conf")"
 	[ -z "$GREP" ] && error "ccashx: invalid argument: $1"
 
 	eval "${GREP##* } \"\$2\"" # verify restrictions met
@@ -47,9 +46,11 @@ done
 [ -z "$SERVER" ] && error 'ccashx: missing required argument: --server'
 BODY=''; ENDP="$(echo "$SERVER$(echo "$CMD" | cut '-d ' -f2)" | tr -s '/')"
 for ARG in $(echo "${CMD##* }" | tr , ' '); do
+	[ "$(upper "$ARG")" = "$ARG" ] && break # no required arguments
+
 	eval "[ -z \"\$$(upper "$ARG")\" ]" && error \
 		"ccashx: missing required argument: $(grep "$ARG" \
-			"$CONF/arg.conf" | cut '-d ' -f3)"
+			"SCRPREFIX/arg.conf" | cut '-d ' -f3)"
 
 	if [ "$ARG" = 'name' -a "${ENDP%?}=" = "$ENDP" ]; then
 		ENDP="$ENDP$NAME"
